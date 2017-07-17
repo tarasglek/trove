@@ -742,7 +742,8 @@ def get_bytes_free_on_fs(path):
 
 
 def list_files_in_directory(root_dir, recursive=False, pattern=None,
-                            include_dirs=False, as_root=False):
+                            include_dirs=False, as_root=False,
+                            follow_links=False):
     """
     Return absolute paths to all files in a given root directory.
 
@@ -767,6 +768,8 @@ def list_files_in_directory(root_dir, recursive=False, pattern=None,
         if pattern:
             cmd_args.extend(['-regextype', 'posix-extended',
                              '-regex', os.path.join('.*', pattern) + '$'])
+        if follow_links:
+            cmd_args = [root_dir, '-follow']
         files = _execute_shell_cmd('find', [], *cmd_args, as_root=True)
         return {fp for fp in files.splitlines()}
 

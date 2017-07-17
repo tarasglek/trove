@@ -40,7 +40,6 @@ def main():
     cfg.parse_args(sys.argv)
     logging.setup(CONF, None)
     debug_utils.setup()
-
     from trove.guestagent import dbaas
     manager = dbaas.datastore_registry().get(CONF.datastore_manager)
     if not manager:

@@ -122,7 +122,7 @@ class PgSqlApp(object):
                                                         self.pg_version[1])
         return sorted(operating_system.list_files_in_directory(
             version_base, recursive=True, pattern=name_pattern,
-            as_root=True), key=len)[0]
+            as_root=True, follow_links=True), key=len)[0]
 
     @property
     def pgsql_config_dir(self):
