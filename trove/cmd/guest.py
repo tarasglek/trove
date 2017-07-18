@@ -70,3 +70,6 @@ def main():
 
     launcher = openstack_service.launch(CONF, server)
     launcher.wait()
+
+if __name__ == "__main__":
+    main()

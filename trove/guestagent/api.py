@@ -77,7 +77,8 @@ class API(object):
     def get_client(self, target, version_cap, serializer=None):
         from trove.instance.models import get_instance_encryption_key
 
-        instance_key = get_instance_encryption_key(self.id)
+        # skips the need for some weird db lookup
+        instance_key = None #get_instance_encryption_key(self.id)
         return rpc.get_client(target, key=instance_key,
                               version_cap=version_cap,
                               serializer=serializer)
