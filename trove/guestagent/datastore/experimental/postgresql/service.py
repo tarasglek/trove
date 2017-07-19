@@ -200,7 +200,9 @@ class PgSqlApp(object):
             'external_pid_file': self._quote(self.pgsql_pid_file),
             'unix_socket_directories': self._quote(self.pgsql_run_dir),
             'listen_addresses': self._quote(','.join(self.LISTEN_ADDRESSES)),
-            'port': cfg.get_configuration_property('postgresql_port')}
+            'port': cfg.get_configuration_property('postgresql_port'),
+            'log_statement':'all'
+            }
         self.configuration_manager.apply_system_override(file_locations)
         self._apply_access_rules()
 

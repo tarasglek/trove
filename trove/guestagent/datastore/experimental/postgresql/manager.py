@@ -123,8 +123,8 @@ class Manager(manager.Manager):
         self.app.start_db_with_conf_changes(context, config_contents)
 
     def create_database(self, context, databases):
-        with EndNotification(context):
-            self.admin.create_database(context, databases)
+        # with EndNotification(context):
+        self.admin.create_database(context, databases)
 
     def delete_database(self, context, database):
         with EndNotification(context):
@@ -179,8 +179,8 @@ class Manager(manager.Manager):
             root_password=root_password)
 
     def create_user(self, context, users):
-        with EndNotification(context):
-            self.admin.create_user(context, users)
+        # with EndNotification(context):
+        self.admin.create_user(context, users)
 
     def list_users(
             self, context, limit=None, marker=None, include_marker=False):

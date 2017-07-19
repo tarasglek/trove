@@ -12,7 +12,7 @@ from trove.common import cfg
 from trove.common import debug_utils
 from trove.common.i18n import _LE
 from trove.guestagent import api as guest_api
-
+from trove.common.db import models
 CONF = cfg.CONF
 # The guest_id opt definition must match the one in common/cfg.py
 CONF.register_opts([openstack_cfg.StrOpt('guest_id', default=None,
@@ -22,6 +22,10 @@ CONF.register_opts([openstack_cfg.StrOpt('guest_id', default=None,
                                                'instance RPC encryption.'))])
 
 def main():
+    action = None
+    if len(sys.argv) > 1:
+        action = sys.argv[1]
+    
     cfg.parse_args(['ffs', '--config-file', '/etc/trove/trove-guestagent.conf'])
 
     # CONF.enable_secure_rpc_messaging = False
@@ -35,10 +39,18 @@ def main():
 
     context = trove_context.TroveContext()
     a = api.API(context, "my_guest_id")
-    a.prepare(128, "", [], [])
-    a.create_user(["taras", "pokey"])
-    a.create_database(["taras"])
-    print a.list_databases()
-    print a.list_users()
-    # print a.enable_root()
+    if action == "prepare":
+        a.prepare(128, "", [], [])
+    elif action == "create_database":
+        username = sys.argv[2]
+        print a.create_database([models.DatastoreSchema(name=username).serialize()])
+    elif action == "create_user":
+        username = sys.argv[2]
+        print a.create_user([models.DatastoreUser(name=username, databases=[username]).serialize()])
+    elif action == "list_users":
+        print a.list_users()
+        print a.list_databases()
+    else:
+        print "unknown action try one of:\n%s <prepare|create_user>" % (sys.argv[0])
+        sys.exit(0)
 main()
