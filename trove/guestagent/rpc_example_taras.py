@@ -7,6 +7,7 @@ from oslo_config import cfg as openstack_cfg
 from oslo_log import log as logging
 from oslo_service import service as openstack_service
 
+from trove.common import context as trove_context
 from trove.common import cfg
 from trove.common import debug_utils
 from trove.common.i18n import _LE
@@ -30,10 +31,14 @@ def main():
     from trove import rpc
     rpc.init(CONF)
 
-    from trove.common import context as trove_context
     import api
+
     context = trove_context.TroveContext()
     a = api.API(context, "my_guest_id")
+    a.prepare(128, "", [], [])
+    a.create_user(["taras", "pokey"])
+    a.create_database(["taras"])
     print a.list_databases()
-    print a.enable_root()
+    print a.list_users()
+    # print a.enable_root()
 main()

@@ -210,6 +210,8 @@ class Manager(manager.Manager):
                    device_path, mount_point, backup_info, config_contents,
                    root_password, overrides, cluster_config, snapshot):
         self.app.install(context, packages)
+        # this stuff should not be in business of doing mkfs/etc
+        """
         LOG.debug("Waiting for database first boot.")
         if (self.app.status.wait_for_real_status_to_change_to(
                 trove_instance.ServiceStatuses.RUNNING,
@@ -224,9 +226,9 @@ class Manager(manager.Manager):
             if os.path.exists(mount_point):
                 device.migrate_data(mount_point)
             device.mount(mount_point)
+        """
         self.configuration_manager.save_configuration(config_contents)
         self.app.apply_initial_guestagent_configuration()
-
         os_admin = models.PostgreSQLUser(self.app.ADMIN_USER)
 
         if backup_info:

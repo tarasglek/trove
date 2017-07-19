@@ -118,16 +118,16 @@ class PgSqlApp(object):
         return self._find_config_file('pg_ident.conf')
 
     def _find_config_file(self, name_pattern):
-        version_base = guestagent_utils.build_file_path(self.pgsql_config_dir,
-                                                        self.pg_version[1])
-        return sorted(operating_system.list_files_in_directory(
+        version_base = self.pgsql_config_dir
+        ret = sorted(operating_system.list_files_in_directory(
             version_base, recursive=True, pattern=name_pattern,
             as_root=True, follow_links=True), key=len)[0]
+        return ret
 
     @property
     def pgsql_config_dir(self):
         return {
-            operating_system.DEBIAN: '/etc/postgresql/',
+            operating_system.DEBIAN: '/var/lib/postgresql/data',
             operating_system.REDHAT: '/var/lib/postgresql/',
             operating_system.SUSE: '/var/lib/pgsql/'
         }[self.OS]

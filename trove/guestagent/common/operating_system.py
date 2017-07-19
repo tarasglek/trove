@@ -765,11 +765,11 @@ def list_files_in_directory(root_dir, recursive=False, pattern=None,
             cmd_args.extend(['-maxdepth', '0'])
         if not include_dirs:
             cmd_args.extend(['-type', 'f'])
+        if follow_links:
+            cmd_args.extend(['-follow'])
         if pattern:
             cmd_args.extend(['-regextype', 'posix-extended',
                              '-regex', os.path.join('.*', pattern) + '$'])
-        if follow_links:
-            cmd_args = [root_dir, '-follow']
         files = _execute_shell_cmd('find', [], *cmd_args, as_root=True)
         return {fp for fp in files.splitlines()}
 

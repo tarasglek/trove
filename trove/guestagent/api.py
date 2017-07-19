@@ -339,8 +339,7 @@ class API(object):
                                   server=self.id,
                                   version=self.API_BASE_VERSION)
         try:
-            instance = DBInstance.get_by(id=self.id)
-            instance_key = instance.key if instance else None
+            instance_key = self.id
             server = rpc.get_server(target, [], key=instance_key)
             server.start()
         finally:
