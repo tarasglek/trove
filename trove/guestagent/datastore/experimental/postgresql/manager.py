@@ -123,8 +123,8 @@ class Manager(manager.Manager):
         self.app.start_db_with_conf_changes(context, config_contents)
 
     def create_database(self, context, databases):
-        # with EndNotification(context):
-        self.admin.create_database(context, databases)
+        with EndNotification(context):
+            self.admin.create_database(context, databases)
 
     def delete_database(self, context, database):
         with EndNotification(context):

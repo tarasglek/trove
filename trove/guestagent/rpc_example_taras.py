@@ -1,5 +1,4 @@
 import gettext
-gettext.install('trove', unicode=1)
 
 import sys
 
@@ -13,13 +12,10 @@ from trove.common import debug_utils
 from trove.common.i18n import _LE
 from trove.guestagent import api as guest_api
 from trove.common.db import models
+from trove.common import notification
+from trove.common.notification import StartNotification
+
 CONF = cfg.CONF
-# The guest_id opt definition must match the one in common/cfg.py
-CONF.register_opts([openstack_cfg.StrOpt('guest_id', default=None,
-                                         help="ID of the Guest Instance."),
-                    openstack_cfg.StrOpt('instance_rpc_encr_key',
-                                         help=('Key (OpenSSL aes_cbc) for '
-                                               'instance RPC encryption.'))])
 
 def main():
     action = None
@@ -37,13 +33,20 @@ def main():
 
     import api
 
+
     context = trove_context.TroveContext()
+    context.notification = notification.DBaaSAPINotification(context, request_id='req_id')
+    def notify_callback(notification, event_qualifier):
+        print "GOT NOTIFIED"
+    notification.DBaaSAPINotification.register_notify_callback(notify_callback)
+
     a = api.API(context, "my_guest_id")
     if action == "prepare":
         a.prepare(128, "", [], [])
     elif action == "create_database":
         username = sys.argv[2]
-        print a.create_database([models.DatastoreSchema(name=username).serialize()])
+        with StartNotification(context):
+            print a.create_database([models.DatastoreSchema(name=username).serialize()])
     elif action == "create_user":
         username = sys.argv[2]
         print a.create_user([models.DatastoreUser(name=username, databases=[username]).serialize()])
@@ -54,3 +57,35 @@ def main():
         print "unknown action try one of:\n%s <prepare|create_user>" % (sys.argv[0])
         sys.exit(0)
 main()
+"""
+Calling python rpc_example_taras.py create_database db
+Results in trove-guestagent erroring:
+2017-07-20 19:08:25.716 1408 DEBUG trove.common.rpc.service [-] Creating RPC server for service guestagent.my_guest_id start /trove/trove/common/rpc/service.py:57
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server [-] Exception during message handling: AttributeError: 'TroveContext' object has no attribute 'notification'
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server Traceback (most recent call last):
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server   File "/trove/.venv/local/lib/python2.7/site-packages/oslo_messaging/rpc/server.py", line 160, in _process_incoming
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server     res = self.dispatcher.dispatch(message)
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server   File "/trove/.venv/local/lib/python2.7/site-packages/oslo_messaging/rpc/dispatcher.py", line 213, in dispatch
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server     return self._do_dispatch(endpoint, method, ctxt, args)
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server   File "/trove/.venv/local/lib/python2.7/site-packages/oslo_messaging/rpc/dispatcher.py", line 183, in _do_dispatch
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server     result = func(ctxt, **new_args)
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server   File "/trove/.venv/local/lib/python2.7/site-packages/osprofiler/profiler.py", line 153, in wrapper
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server     return f(*args, **kwargs)
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server   File "/trove/trove/guestagent/datastore/experimental/postgresql/manager.py", line 126, in create_database
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server     with EndNotification(context):
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server   File "/trove/trove/common/notification.py", line 48, in __init__
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server     self.context.notification.payload.update(kwargs)
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server AttributeError: 'TroveContext' object has no attribute 'notification'
+2017-07-20 19:08:32.405 1408 ERROR oslo_messaging.rpc.server
+
+This is due to 
+--- a/trove/guestagent/datastore/experimental/postgresql/manager.py
++++ b/trove/guestagent/datastore/experimental/postgresql/manager.py
+@@ -123,8 +123,8 @@ class Manager(manager.Manager):
+         self.app.start_db_with_conf_changes(context, config_contents)
+
+     def create_database(self, context, databases):
+-        with EndNotification(context):
+^--- EndNotification seems to require something special from context to accept notifications
+"""
+

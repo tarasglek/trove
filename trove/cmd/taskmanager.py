@@ -27,8 +27,9 @@ def startup(conf, topic):
     from trove.common.rpc import service as rpc_service
     from trove.instance import models as inst_models
 
-    notification.DBaaSAPINotification.register_notify_callback(
-        inst_models.persist_instance_fault)
+    def notify_callback(notification, event_qualifier):
+        print "GOT NOTIFIED"
+    notification.DBaaSAPINotification.register_notify_callback(notify_callback)
 
     if conf.enable_secure_rpc_messaging:
         key = conf.taskmanager_rpc_encr_key
