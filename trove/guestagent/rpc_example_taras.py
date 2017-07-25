@@ -16,6 +16,12 @@ from trove.common import notification
 from trove.common.notification import StartNotification
 
 CONF = cfg.CONF
+def _make_request(path='/', context=None, **kwargs):
+    from webob import Request
+    path = '/'
+    print("path: %s" % path)
+    return Request.blank(path=path, environ={'trove.context': context},
+                            **kwargs)
 
 def main():
     action = None
@@ -35,17 +41,24 @@ def main():
 
 
     context = trove_context.TroveContext()
-    context.notification = notification.DBaaSAPINotification(context, request_id='req_id')
-    def notify_callback(notification, event_qualifier):
-        print "GOT NOTIFIED"
-    notification.DBaaSAPINotification.register_notify_callback(notify_callback)
+
+
+    def persist_instance_fault(notification, event_qualifier):
+        print "whhaaaa?"
+
+    notification.DBaaSAPINotification.register_notify_callback(
+         persist_instance_fault)
+    # notification.DBaaSAPINotification.register_notify_callback(notify_callback)
+    from trove.common.notification import NotificationCastWrapper
 
     a = api.API(context, "my_guest_id")
     if action == "prepare":
         a.prepare(128, "", [], [])
     elif action == "create_database":
         username = sys.argv[2]
-        with StartNotification(context):
+        context.notification = notification.DBaaSInstanceCreate(context,
+                                                                request=_make_request(context=context))
+        with NotificationCastWrapper(context, 'guest'):
             print a.create_database([models.DatastoreSchema(name=username).serialize()])
     elif action == "create_user":
         username = sys.argv[2]
